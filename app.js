@@ -1,29 +1,35 @@
-// Copyright 2017 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 'use strict';
 
-// [START gae_node_request_example]
+require('dotenv').config()
+
 const express = require('express');
+const bodyParser = require('body-parser')
 
 const app = express();
 
-app.get('/', (req, res) => {
-  res
-    .status(200)
-    .send('Hello, world!')
-    .end();
+app.use(bodyParser.json());
+
+const textToSpeech = require('./controllers/textToSpeech');
+
+app.post('/', (req, res) => {
+  if (req.body.apiKey !== process.env.API_KEY) {
+    res
+      .status(401)
+      .send('Unauthorized')
+      .end();
+    
+    return;
+  }
+
+  var result = textToSpeech(req.body.text, req.body.languageCode, req.body.ssmlGender, req.body.name);
+
+  result.then((link) => {
+    console.log(result, link);
+    res
+      .status(200)
+      .send(link)
+      .end();
+  })
 });
 
 // Start the server
@@ -32,6 +38,5 @@ app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
   console.log('Press Ctrl+C to quit.');
 });
-// [END gae_node_request_example]
 
 module.exports = app;
